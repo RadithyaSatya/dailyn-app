@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Dailyn</string>
+    <string name="tab_home_title">Home</string>
+    <string name="tab_analysis_title">Analysis</string>
+    <string name="tab_dairy_title">Dairy</string>
+    <string name="home_title">Dailyn - Habits</string>
+    <string name="empty_list_message">No habits yet.\nTap + to add one.</string>
+    <string name="fab_add_content_desc">Add</string>
+    <string name="new_habit_title">New Habit #%1$d</string>
+    <string name="new_habit_desc">Short Description</string>
 </resources>
