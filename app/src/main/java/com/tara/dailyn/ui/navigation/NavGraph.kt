@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.tara.dailyn.ui.features.addhabit.AddHabitRoute
 import com.tara.dailyn.ui.features.analysis.AnalysisRoute
 import com.tara.dailyn.ui.features.diary.DiaryRoute
 import com.tara.dailyn.ui.features.home.HomeRoute
@@ -20,7 +21,7 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Screen.Home.route) { HomeRoute() }
-        composable(Screen.Analysis.route) { AnalysisRoute() }
+        composable(Screen.AddHabit.route) { AddHabitRoute() }
         composable(Screen.Diary.route) { DiaryRoute() }
     }
 }

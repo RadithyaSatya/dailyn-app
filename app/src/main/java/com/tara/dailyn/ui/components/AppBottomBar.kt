@@ -24,7 +24,7 @@ fun AppBottomBar(
     navController: NavController,
     shape: Shape = RoundedCornerShape(24.dp),
 ) {
-    val items = listOf(Screen.Home, Screen.Analysis, Screen.Diary)
+    val items = listOf(Screen.Home, Screen.AddHabit, Screen.Diary)
     val currentRoute by navController.currentBackStackEntryAsState()
 
     Box(
