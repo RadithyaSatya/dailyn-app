@@ -6,7 +6,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.tara.dailyn.ui.features.addhabit.AddHabitRoute
-import com.tara.dailyn.ui.features.analysis.AnalysisRoute
 import com.tara.dailyn.ui.features.diary.DiaryRoute
 import com.tara.dailyn.ui.features.home.HomeRoute
 
@@ -20,8 +19,25 @@ fun NavGraph(
         startDestination = Screen.Home.route,
         modifier = modifier
     ) {
-        composable(Screen.Home.route) { HomeRoute() }
-        composable(Screen.AddHabit.route) { AddHabitRoute() }
+        composable(Screen.Home.route) {
+            HomeRoute(
+                onAddHabitClick = { navController.navigate(Screen.AddHabit.route) }
+            )
+        }
+
+        composable(Screen.AddHabit.route) {
+            AddHabitRoute(
+                onSaved = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Screen.Diary.route) { DiaryRoute() }
     }
 }

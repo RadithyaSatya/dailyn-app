@@ -1,12 +1,15 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tara.dailyn.data.repository.HabitRepository
 import com.tara.dailyn.ui.features.addhabit.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-class AddHabitViewModel : ViewModel() {
+class AddHabitViewModel(
+    private val repository: HabitRepository
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AddHabitUiState())
     val state: StateFlow<AddHabitUiState> = _state.asStateFlow()
@@ -88,37 +91,26 @@ class AddHabitViewModel : ViewModel() {
     }
 
     private fun onSave() = viewModelScope.launch {
-        val s = _state.value
+        val s = state.value
 
-        if (s.title.isBlank()) {
-            update { it.copy(titleError = "Title tidak boleh kosong") }
-            _effects.emit(AddHabitEffect.ValidationError)
-            return@launch
-        }
-
-        when (s.frequencyType) {
-            FrequencyType.SPECIFIC_DAYS_OF_WEEK -> {
-                if (s.selectedDaysOfWeek.isEmpty()) {
-                    _effects.emit(AddHabitEffect.ValidationError); return@launch
-                }
-            }
-            FrequencyType.SPECIFIC_DAY_OF_MONTH -> {
-                if (s.specificDaysOfMonth.isEmpty()) {
-                    _effects.emit(AddHabitEffect.ValidationError); return@launch
-                }
-            }
-            FrequencyType.SOME_DAYS_PER_PERIOD -> {
-                if (s.someDaysCount == null || s.someDaysCount <= 0) {
-                    _effects.emit(AddHabitEffect.ValidationError); return@launch
-                }
-            }
-            else -> Unit
-        }
-
+        // validasi kamu sudah oke
         update { it.copy(isSaving = true) }
+
+        val newId = repository.createHabit(
+            title = s.title,
+            description = s.description,
+            uiFrequency = s.frequencyType,                 // UI -> DB di repo
+            selectedDaysOfWeek = s.selectedDaysOfWeek,
+            specificDaysOfMonth = s.specificDaysOfMonth,   // set<Int>
+            someDaysCount = s.someDaysCount,
+            uiPeriodType = s.periodType,                     // langsung pakai PeriodType (WEEK/MONTH)
+            reminderEnabled = s.reminderEnabled,
+            reminderTime = s.reminderTime
+        )
 
         _effects.emit(
             AddHabitEffect.Saved(
+                id = newId,
                 title = s.title.trim(),
                 description = s.description.trim(),
                 frequencyType = s.frequencyType,
@@ -130,7 +122,6 @@ class AddHabitViewModel : ViewModel() {
                 specificDaysOfMonth = s.specificDaysOfMonth
             )
         )
-
         update { it.copy(isSaving = false) }
     }
 }

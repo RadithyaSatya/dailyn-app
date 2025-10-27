@@ -11,7 +11,7 @@ data class AddHabitUiState (
     val frequencyType: FrequencyType = FrequencyType.SOME_DAYS_PER_PERIOD,
     val selectedDaysOfWeek: Set<DayOfWeek> = emptySet(),
     val specificDayOfMonth: Int? = null,
-    val someDaysCount: Int? = null,
+    val someDaysCount: Int? = 1,
     val specificDaysOfMonth: Set<Int> = emptySet(),
     val periodType: PeriodType = PeriodType.WEEK,
     val reminderEnabled: Boolean = true,

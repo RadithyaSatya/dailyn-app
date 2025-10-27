@@ -31,4 +31,5 @@
     <string name="period_week">per Week</string>
     <string name="period_month">per Month</string>
     <string name="some_days_per_period_example">Example: %1$d day(s) %2$s</string>
+    <string name="validation_error_message">Please check your input fields</string>
 </resources>

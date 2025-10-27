@@ -7,6 +7,7 @@ sealed interface AddHabitEffect {
     data object Cancelled : AddHabitEffect
     data object ValidationError : AddHabitEffect
     data class Saved(
+        val id: String,
         val title: String,
         val description: String,
         val frequencyType: FrequencyType,

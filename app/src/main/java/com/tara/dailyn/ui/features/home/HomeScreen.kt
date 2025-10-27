@@ -116,15 +116,15 @@ fun HomeScreen(
 fun HomeScreenPreview() {
     val sampleState = HomeUiState(
         items = listOf(
-            HabitUi(1, "Minum Air 8 Gelas", "Hydration harian", false),
-            HabitUi(2, "Olahraga 20 menit", "Jogging ringan", true),
-            HabitUi(3, "Baca 10 halaman", "Buku apa saja", false),
-            HabitUi(4, "Minum Air 8 Gelas", "Hydration harian", false),
-            HabitUi(5, "Olahraga 20 menit", "Jogging ringan", true),
-            HabitUi(6, "Baca 10 halaman", "Buku apa saja", false),
-            HabitUi(7, "Minum Air 8 Gelas", "Hydration harian", false),
-            HabitUi(8, "Olahraga 20 menit", "Jogging ringan", true),
-            HabitUi(9, "Baca 10 halaman", "Buku apa saja", false),
+            HabitUi("1", "Minum Air 8 Gelas", "Hydration harian", false),
+            HabitUi("2", "Olahraga 20 menit", "Jogging ringan", true),
+            HabitUi("3", "Baca 10 halaman", "Buku apa saja", false),
+            HabitUi("4", "Minum Air 8 Gelas", "Hydration harian", false),
+            HabitUi("5", "Olahraga 20 menit", "Jogging ringan", true),
+            HabitUi("6", "Baca 10 halaman", "Buku apa saja", false),
+            HabitUi("7", "Minum Air 8 Gelas", "Hydration harian", false),
+            HabitUi("8", "Olahraga 20 menit", "Jogging ringan", true),
+            HabitUi("9", "Baca 10 halaman", "Buku apa saja", false),
         )
     )
 
