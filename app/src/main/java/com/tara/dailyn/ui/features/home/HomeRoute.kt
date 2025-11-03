@@ -11,7 +11,8 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun HomeRoute(
-    onAddHabitClick: () -> Unit = {}
+    onAddHabitClick: () -> Unit = {},
+    onHabitClick: (String) -> Unit = {}   // <--- tambahin ini
 ) {
     val context = LocalContext.current.applicationContext
     val db = remember { AppDatabase.get(context) }
@@ -30,6 +31,9 @@ fun HomeRoute(
                 HomeEvent.AddHabit -> onAddHabitClick()
                 else -> vm.onEvent(ev)
             }
+        },
+        onHabitClick = { habitId ->
+            onHabitClick(habitId)
         }
     )
 }

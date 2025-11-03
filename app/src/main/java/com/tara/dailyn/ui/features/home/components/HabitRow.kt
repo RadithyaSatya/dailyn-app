@@ -9,17 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tara.dailyn.ui.features.home.model.HabitUi
-
 @Composable
 fun HabitRow(
     habit: HabitUi,
+    onClick: () -> Unit,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Row(
             Modifier
@@ -31,7 +33,6 @@ fun HabitRow(
                 Modifier
                     .weight(1f)
                     .padding(end = 12.dp)
-                    .clickable { onToggle() }
             ) {
                 Text(
                     text = habit.title,

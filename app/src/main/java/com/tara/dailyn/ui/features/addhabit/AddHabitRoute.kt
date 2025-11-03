@@ -12,18 +12,20 @@ import com.tara.dailyn.data.repository.HabitRepository
 import com.tara.dailyn.ui.features.addhabit.model.AddHabitEffect
 import kotlinx.coroutines.flow.collectLatest
 import com.tara.dailyn.R
+import com.tara.dailyn.ui.features.addhabit.model.FormMode
 
 @Composable
 fun AddHabitRoute(
     onSaved: (String) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    mode: FormMode = FormMode.Create
 ) {
     val context = LocalContext.current.applicationContext
     val db = remember { AppDatabase.get(context) }
     val repo = remember { HabitRepository(db.habitDao(), db.habitLogDao()) }
 
     val vm: AddHabitViewModel = viewModel(
-        factory = remember(repo) { AddHabitViewModelFactory(repo) }
+        factory = remember(repo, mode) { AddHabitViewModelFactory(repo, mode) }
     )
 
     val state = vm.state.collectAsStateWithLifecycle().value

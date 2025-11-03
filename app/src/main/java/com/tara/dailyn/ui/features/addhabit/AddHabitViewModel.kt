@@ -8,14 +8,39 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 class AddHabitViewModel(
-    private val repository: HabitRepository
+    private val repository: HabitRepository,
+    private val mode: FormMode
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddHabitUiState())
     val state: StateFlow<AddHabitUiState> = _state.asStateFlow()
 
     private val _effects = MutableSharedFlow<AddHabitEffect>()
-    val effects = _effects.asSharedFlow()
+    val effects: SharedFlow<AddHabitEffect> = _effects.asSharedFlow()
+
+    init {
+        // Prefill jika Edit
+        if (mode is FormMode.Edit) {
+            viewModelScope.launch {
+                // Ambil data dari repo → mapping ke UI
+                val data = repository.getHabitForEdit(mode.habitId)
+                // NOTE: implementasikan mapping ini sesuai model entity/domain kamu
+                _state.update { s ->
+                    s.copy(
+                        title = data.title,
+                        description = data.description ?: "",
+                        frequencyType = data.uiFrequencyType,                  // FrequencyType
+                        periodType = data.uiPeriodType,                        // PeriodType
+                        selectedDaysOfWeek = data.selectedDaysOfWeek.toSet(),  // Set<DayOfWeek>
+                        specificDaysOfMonth = data.specificDaysOfMonth.toSet(),// Set<Int>
+                        someDaysCount = data.someDaysCount,
+                        reminderEnabled = data.reminderEnabled,
+                        reminderTime = data.reminderTime
+                    )
+                }
+            }
+        }
+    }
 
     fun onEvent(event: AddHabitEvent) {
         when (event) {
@@ -32,14 +57,14 @@ class AddHabitViewModel(
                     )
                     FrequencyType.SPECIFIC_DAYS_OF_WEEK -> s.copy(
                         frequencyType = event.type,
-                        selectedDaysOfWeek = s.selectedDaysOfWeek, // keep
+                        selectedDaysOfWeek = s.selectedDaysOfWeek,
                         specificDaysOfMonth = emptySet(),
                         someDaysCount = null
                     )
                     FrequencyType.SPECIFIC_DAY_OF_MONTH -> s.copy(
                         frequencyType = event.type,
                         selectedDaysOfWeek = emptySet(),
-                        specificDaysOfMonth = s.specificDaysOfMonth, // keep
+                        specificDaysOfMonth = s.specificDaysOfMonth,
                         someDaysCount = null
                     )
                     FrequencyType.SOME_DAYS_PER_PERIOD -> s.copy(
@@ -55,7 +80,6 @@ class AddHabitViewModel(
                 s.copy(selectedDaysOfWeek = s.selectedDaysOfWeek.toggle(event.day))
             }
 
-            // GANTI: handler untuk toggle tanggal (multiple select)
             is AddHabitEvent.ToggleSpecificDayOfMonth -> update { s ->
                 val newSet = if (event.day in s.specificDaysOfMonth)
                     s.specificDaysOfMonth - event.day
@@ -92,25 +116,42 @@ class AddHabitViewModel(
 
     private fun onSave() = viewModelScope.launch {
         val s = state.value
-
-        // validasi kamu sudah oke
         update { it.copy(isSaving = true) }
 
-        val newId = repository.createHabit(
-            title = s.title,
-            description = s.description,
-            uiFrequency = s.frequencyType,                 // UI -> DB di repo
-            selectedDaysOfWeek = s.selectedDaysOfWeek,
-            specificDaysOfMonth = s.specificDaysOfMonth,   // set<Int>
-            someDaysCount = s.someDaysCount,
-            uiPeriodType = s.periodType,                     // langsung pakai PeriodType (WEEK/MONTH)
-            reminderEnabled = s.reminderEnabled,
-            reminderTime = s.reminderTime
-        )
+        val id = when (val m = mode) {
+            is FormMode.Create -> {
+                repository.createHabit(
+                    title = s.title,
+                    description = s.description,
+                    uiFrequency = s.frequencyType,
+                    selectedDaysOfWeek = s.selectedDaysOfWeek,
+                    specificDaysOfMonth = s.specificDaysOfMonth,
+                    someDaysCount = s.someDaysCount,
+                    uiPeriodType = s.periodType,
+                    reminderEnabled = s.reminderEnabled,
+                    reminderTime = s.reminderTime
+                )
+            }
+            is FormMode.Edit -> {
+                repository.updateHabit(
+                    habitId = m.habitId,
+                    title = s.title,
+                    description = s.description,
+                    uiFrequency = s.frequencyType,
+                    selectedDaysOfWeek = s.selectedDaysOfWeek,
+                    specificDaysOfMonth = s.specificDaysOfMonth,
+                    someDaysCount = s.someDaysCount,
+                    uiPeriodType = s.periodType,
+                    reminderEnabled = s.reminderEnabled,
+                    reminderTime = s.reminderTime
+                )
+                m.habitId // return existing id
+            }
+        }
 
         _effects.emit(
             AddHabitEffect.Saved(
-                id = newId,
+                id = id,
                 title = s.title.trim(),
                 description = s.description.trim(),
                 frequencyType = s.frequencyType,

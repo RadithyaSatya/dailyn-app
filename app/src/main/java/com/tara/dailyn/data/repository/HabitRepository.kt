@@ -7,9 +7,14 @@ import com.tara.dailyn.data.local.entity.HabitLogEntity
 import com.tara.dailyn.data.local.model.LogStatus
 import com.tara.dailyn.data.local.model.OverflowPolicy
 import com.tara.dailyn.data.local.model.PeriodType
+import com.tara.dailyn.data.local.relation.HabitWithRules
+import com.tara.dailyn.data.repository.model.HabitDetailObs
+import com.tara.dailyn.data.repository.model.HabitLogForDetail
+import com.tara.dailyn.ui.features.addhabit.model.HabitForEdit
 import com.tara.dailyn.ui.features.home.model.HabitUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.*
@@ -214,6 +219,171 @@ class HabitRepository(
             } else {
                 // set DONE
                 habitLogDao.updateStatus(existing.id, LogStatus.DONE, Instant.now())
+            }
+        }
+    }
+
+    suspend fun getHabitForEdit(id: String): HabitForEdit = withContext(Dispatchers.IO) {
+        // DAO ini perlu kamu sediakan (lihat bagian DAO di bawah):
+        val rel = habitDao.getHabitWithRules(id)
+            ?: throw IllegalStateException("Habit not found: $id")
+
+        // Map DB -> UI
+        val uiFreq = when (rel.habit.frequencyType) {
+            DbFreq.EVERY_DAY -> UiFreq.EVERY_DAY
+            DbFreq.CUSTOM_WEEKLY -> UiFreq.SPECIFIC_DAYS_OF_WEEK
+            DbFreq.SPECIFIC_DATES_OF_MONTH -> UiFreq.SPECIFIC_DAY_OF_MONTH
+            DbFreq.SOME_DAYS_PER_PERIOD -> UiFreq.SOME_DAYS_PER_PERIOD
+        }
+
+        val uiPeriod = when (rel.habit.periodType) {
+            com.tara.dailyn.data.local.model.PeriodType.WEEK -> UiPeriod.WEEK
+            com.tara.dailyn.data.local.model.PeriodType.MONTH -> UiPeriod.MONTH
+            null -> UiPeriod.WEEK // default aman; tidak dipakai kecuali SOME_DAYS_PER_PERIOD
+        }
+
+        HabitForEdit(
+            id = rel.habit.id,
+            title = rel.habit.title,
+            description = rel.habit.description,
+            uiFrequencyType = uiFreq,
+            uiPeriodType = uiPeriod,
+            selectedDaysOfWeek = rel.weeklyDays.map { DayOfWeek.of(it.dayOfWeek) },
+            specificDaysOfMonth = rel.monthlyDays.map { it.dayOfMonth },
+            someDaysCount = rel.habit.someDaysCount,
+            reminderEnabled = rel.reminders.isNotEmpty(),
+            reminderTime = rel.reminders.firstOrNull()?.timeOfDay
+        )
+    }
+
+    suspend fun updateHabit(
+        habitId: String,
+        title: String,
+        description: String?,
+        uiFrequency: UiFreq,
+        selectedDaysOfWeek: Set<DayOfWeek>,
+        specificDaysOfMonth: Set<Int>,
+        someDaysCount: Int?,
+        uiPeriodType: UiPeriod,
+        reminderEnabled: Boolean,
+        reminderTime: LocalTime?
+    ) = withContext(Dispatchers.IO) {
+        val now = Instant.now()
+
+        val dbFrequency: DbFreq = when (uiFrequency) {
+            UiFreq.EVERY_DAY -> DbFreq.EVERY_DAY
+            UiFreq.SPECIFIC_DAYS_OF_WEEK -> DbFreq.CUSTOM_WEEKLY
+            UiFreq.SPECIFIC_DAY_OF_MONTH -> DbFreq.SPECIFIC_DATES_OF_MONTH
+            UiFreq.SOME_DAYS_PER_PERIOD -> DbFreq.SOME_DAYS_PER_PERIOD
+        }
+
+        val dbPeriod: PeriodType? = when {
+            dbFrequency == DbFreq.SOME_DAYS_PER_PERIOD -> when (uiPeriodType) {
+                UiPeriod.WEEK -> PeriodType.WEEK
+                UiPeriod.MONTH -> PeriodType.MONTH
+            }
+            else -> null
+        }
+
+        if (dbFrequency == DbFreq.SOME_DAYS_PER_PERIOD) {
+            requireNotNull(someDaysCount) { "Mohon isi jumlah target per periode (>0)." }
+            require(someDaysCount > 0) { "Mohon isi jumlah target per periode (>0)." }
+        }
+
+        // Ambil existing biar createdAt tidak berubah
+        val existing = habitDao.getHabitById(habitId) ?: throw IllegalStateException("Habit not found")
+        val updated = existing.copy(
+            title = title.trim(),
+            description = description?.trim().orEmpty(),
+            frequencyType = dbFrequency,
+            periodType = dbPeriod,
+            someDaysCount = if (dbFrequency == DbFreq.SOME_DAYS_PER_PERIOD) someDaysCount else null,
+            updatedAt = now
+        )
+
+        val weeklyDaysInts =
+            if (dbFrequency == DbFreq.CUSTOM_WEEKLY) selectedDaysOfWeek.map { it.value } else emptyList()
+        val monthlyDaysInts =
+            if (dbFrequency == DbFreq.SPECIFIC_DATES_OF_MONTH) specificDaysOfMonth.sorted() else emptyList()
+        val reminders = if (reminderEnabled && reminderTime != null) listOf(reminderTime) else emptyList()
+
+        // Transaksi: replace rules (DAO lihat bawah)
+        habitDao.updateHabitWithRules(
+            habit = updated,
+            weeklyDays = weeklyDaysInts,
+            monthlyDays = monthlyDaysInts,
+            reminders = reminders,
+            categoryIds = emptyList()
+        )
+    }
+
+    suspend fun deleteHabit(habitId: String) = withContext(Dispatchers.IO) {
+        // bisa hard delete + cascade manual, atau soft-delete
+        habitDao.deleteHabitCascade(habitId)
+    }
+
+    fun observeHabitDetail(habitId: String): Flow<HabitDetailObs> {
+        return habitDao.observeHabitWithRules(habitId)
+            .filterNotNull()
+            .map { rel ->
+                HabitDetailObs(
+                    id = rel.habit.id,
+                    title = rel.habit.title,
+                    description = rel.habit.description ?: "",
+                    scheduleText = buildScheduleTextFromRelation(rel)
+                )
+            }
+    }
+
+    /**
+     * Ambil log X hari ke belakang, urut ASC (biar .takeLast(...) di ViewModel kamu masuk akal)
+     */
+    fun observeLogs(habitId: String, daysBack: Int): Flow<List<HabitLogForDetail>> {
+        val fromDate = LocalDate.now().minusDays(daysBack.toLong())
+        val toDate = LocalDate.now()
+
+        return habitLogDao.observeLogs(
+            habitId = habitId,
+            from = fromDate,
+            to = toDate
+        ).map { list ->
+            list
+                .sortedWith(compareBy<HabitLogEntity> { it.date }.thenBy { it.occurIndex })
+                .map {
+                    HabitLogForDetail(
+                        date = it.date,
+                        statusDone = it.status == LogStatus.DONE
+                    )
+                }
+        }
+    }
+
+    private fun buildScheduleTextFromRelation(rel: HabitWithRules): String {
+        val habit = rel.habit
+        return when (habit.frequencyType) {
+            DbFreq.EVERY_DAY -> "Every day"
+
+            DbFreq.CUSTOM_WEEKLY -> {
+                val days = rel.weeklyDays
+                    .map { it.dayOfWeek }
+                    .sorted()
+                    .map { DayOfWeek.of(it).name.lowercase().replaceFirstChar { c -> c.uppercase() } }
+                if (days.isEmpty()) "Specific days of week" else "Every ${days.joinToString(", ")}"
+            }
+
+            DbFreq.SPECIFIC_DATES_OF_MONTH -> {
+                val dates = rel.monthlyDays.map { it.dayOfMonth }.sorted()
+                if (dates.isEmpty()) "Specific dates of month"
+                else "On ${dates.joinToString(", ")} each month"
+            }
+
+            DbFreq.SOME_DAYS_PER_PERIOD -> {
+                val count = habit.someDaysCount ?: 0
+                when (habit.periodType) {
+                    PeriodType.WEEK -> "$count day(s) per week"
+                    PeriodType.MONTH -> "$count day(s) per month"
+                    else -> "$count day(s)"
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ enum class PeriodType { WEEK, MONTH }
 data class AddHabitUiState (
     val title: String = "",
     val description: String = "",
-    val frequencyType: FrequencyType = FrequencyType.SOME_DAYS_PER_PERIOD,
+    val frequencyType: FrequencyType = FrequencyType.EVERY_DAY,
     val selectedDaysOfWeek: Set<DayOfWeek> = emptySet(),
     val specificDayOfMonth: Int? = null,
     val someDaysCount: Int? = 1,

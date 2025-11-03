@@ -29,6 +29,7 @@ import java.util.Locale
 fun HomeScreen(
     state: HomeUiState,
     onEvent: (HomeEvent) -> Unit,
+    onHabitClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -42,7 +43,7 @@ fun HomeScreen(
                             contentDescription = stringResource(R.string.fab_add_content_desc)
                         )
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { /* settings */ }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = stringResource(R.string.fab_add_content_desc)
@@ -57,7 +58,6 @@ fun HomeScreen(
             end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
             bottom = innerPadding.calculateBottomPadding() / 2,
             start = innerPadding.calculateStartPadding(LayoutDirection.Ltr)
-
         )
         Column(
             modifier
@@ -101,7 +101,8 @@ fun HomeScreen(
                         items(state.items, key = { it.id }) { habit ->
                             HabitRow(
                                 habit = habit,
-                                onToggle = { onEvent(HomeEvent.ToggleHabit(habit.id)) }
+                                onClick = { onHabitClick(habit.id) },              // <--- ke detail
+                                onToggle = { onEvent(HomeEvent.ToggleHabit(habit.id)) } // <--- toggle
                             )
                         }
                     }
@@ -131,7 +132,8 @@ fun HomeScreenPreview() {
     MaterialTheme {
         HomeScreen(
             state = sampleState,
-            onEvent = {}
+            onEvent = {},
+            onHabitClick = {}
         )
     }
 }
