@@ -38,9 +38,33 @@ interface HabitDao {
     suspend fun insertHabitCategoryRefs(list: List<HabitCategoryCrossRef>)
     @Query("DELETE FROM habit_categories WHERE habitId = :habitId")
     suspend fun clearHabitCategoryRefs(habitId: String)
+    @Query("DELETE FROM habit_categories WHERE categoryId = :categoryId")
+    suspend fun deleteHabitCategoryRefsByCategory(categoryId: Long)
+    @Query("SELECT habitId FROM habit_categories WHERE categoryId = :categoryId")
+    suspend fun getHabitIdsByCategory(categoryId: Long): List<String>
+    @Query("SELECT COUNT(*) FROM habit_categories WHERE habitId = :habitId")
+    suspend fun countHabitCategories(habitId: String): Int
 
     @Query("SELECT * FROM habits WHERE id = :id LIMIT 1")
     suspend fun getHabitById(id: String): HabitEntity?
+
+    @Query("""
+        SELECT * FROM habits
+        WHERE COALESCE(habitGroupId, id) = :groupId
+        ORDER BY startDate DESC, createdAt DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestHabitVersion(groupId: String): HabitEntity?
+
+    @Query("""
+        SELECT * FROM habits
+        WHERE COALESCE(habitGroupId, id) = :groupId
+          AND startDate <= :date
+          AND (endDate IS NULL OR endDate >= :date)
+        ORDER BY startDate DESC, createdAt DESC
+        LIMIT 1
+    """)
+    suspend fun getHabitVersionForDate(groupId: String, date: LocalDate): HabitEntity?
     // Transactional upsert (habit + rules)
     @Transaction
     suspend fun upsertHabitWithRules(
@@ -75,8 +99,28 @@ interface HabitDao {
     fun observeAllHabitsWithRules(): Flow<List<HabitWithRules>>
 
     @Transaction
+    @Query("SELECT * FROM habits WHERE isArchived = 0 ORDER BY createdAt DESC")
+    suspend fun getAllHabitsWithRules(): List<HabitWithRules>
+
+    @Transaction
     @Query("SELECT * FROM habits WHERE id = :id")
     suspend fun getHabitWithRules(id: String): HabitWithRules?
+
+    @Transaction
+    @Query("""
+        SELECT * FROM habits
+        WHERE COALESCE(habitGroupId, id) = :groupId
+        ORDER BY startDate ASC, createdAt ASC
+    """)
+    suspend fun getHabitVersionsWithRules(groupId: String): List<HabitWithRules>
+
+    @Transaction
+    @Query("""
+        SELECT * FROM habits
+        WHERE COALESCE(habitGroupId, id) = :groupId
+        ORDER BY startDate ASC, createdAt ASC
+    """)
+    fun observeHabitVersionsWithRules(groupId: String): Flow<List<HabitWithRules>>
 
     // DUE base queries
     @Query("""
@@ -123,9 +167,23 @@ interface HabitDao {
 
     @Query("""
         SELECT 
-            h.id AS id,
+            COALESCE(h.habitGroupId, h.id) AS id,
             h.title AS title,
             h.description AS description,
+            (
+                SELECT c.name
+                FROM habit_categories hc
+                JOIN categories c ON c.id = hc.categoryId
+                WHERE hc.habitId = h.id
+                LIMIT 1
+            ) AS categoryName,
+            (
+                SELECT c.icon
+                FROM habit_categories hc
+                JOIN categories c ON c.id = hc.categoryId
+                WHERE hc.habitId = h.id
+                LIMIT 1
+            ) AS categoryIcon,
             EXISTS(
                 SELECT 1 FROM habit_logs l
                 WHERE l.habitId = h.id 
@@ -144,9 +202,23 @@ interface HabitDao {
 
     @Query("""
         SELECT 
-            h.id AS id,
+            COALESCE(h.habitGroupId, h.id) AS id,
             h.title AS title,
             h.description AS description,
+            (
+                SELECT c.name
+                FROM habit_categories hc
+                JOIN categories c ON c.id = hc.categoryId
+                WHERE hc.habitId = h.id
+                LIMIT 1
+            ) AS categoryName,
+            (
+                SELECT c.icon
+                FROM habit_categories hc
+                JOIN categories c ON c.id = hc.categoryId
+                WHERE hc.habitId = h.id
+                LIMIT 1
+            ) AS categoryIcon,
             EXISTS(
                 SELECT 1 FROM habit_logs l
                 WHERE l.habitId = h.id 
@@ -217,7 +289,10 @@ interface HabitDao {
                     )
                 )
           )
-        ORDER BY h.createdAt DESC
+        ORDER BY
+            CASE WHEN h.homeSortOrder IS NULL THEN 1 ELSE 0 END,
+            h.homeSortOrder ASC,
+            h.createdAt DESC
     """)
     fun observeDueHabitsWithStatus(
         date: LocalDate,
@@ -237,13 +312,24 @@ interface HabitDao {
         pMonth: PeriodType = PeriodType.MONTH
     ): Flow<List<HabitRowProjection>>
 
+    @Query("""
+        UPDATE habits
+        SET homeSortOrder = :homeSortOrder, updatedAt = :updatedAt
+        WHERE COALESCE(habitGroupId, id) = :groupId
+    """)
+    suspend fun updateHomeSortOrderForGroup(
+        groupId: String,
+        homeSortOrder: Long,
+        updatedAt: Instant
+    )
+
     @Transaction
     suspend fun updateHabitWithRules(
         habit: HabitEntity,
         weeklyDays: List<Int>,
         monthlyDays: List<Int>,
         reminders: List<LocalTime>,
-        categoryIds: List<String>
+        categoryIds: List<Long>
     ) {
         updateHabit(habit)
         deleteWeeklyDaysByHabit(habit.id)
@@ -329,13 +415,13 @@ interface HabitDao {
     }
 
     @Transaction
-    suspend fun insertHabitCategories(habitId: String, categoryIds: List<String>) {
+    suspend fun insertHabitCategories(habitId: String, categoryIds: List<Long>) {
         if (categoryIds.isNotEmpty()) {
             insertHabitCategoryRefs(
                 categoryIds.map { catId ->
                     HabitCategoryCrossRef(
                         habitId = habitId,
-                        categoryId = catId.toLong()
+                        categoryId = catId
                     )
                 }
             )
@@ -346,6 +432,12 @@ interface HabitDao {
     @Transaction
     @Query("SELECT * FROM habits WHERE id = :id LIMIT 1")
     fun observeHabitWithRules(id: String): Flow<HabitWithRules>
+
+    @Query("""
+        SELECT * FROM habits
+        WHERE COALESCE(habitGroupId, id) = :groupId
+    """)
+    suspend fun getHabitVersions(groupId: String): List<HabitEntity>
 
     @Query("""
     SELECT * FROM habit_logs 

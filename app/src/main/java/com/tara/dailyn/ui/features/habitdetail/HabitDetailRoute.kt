@@ -29,7 +29,7 @@ fun HabitDetailRoute(
 ) {
     val ctx = LocalContext.current.applicationContext
     val db = remember { AppDatabase.get(ctx) }
-    val repo = remember { HabitRepository(db.habitDao(), db.habitLogDao()) }
+    val repo = remember { HabitRepository(db.categoryDao(), db.habitDao(), db.habitLogDao(), ctx) }
 
     val vm: HabitDetailViewModel = viewModel(
         factory = remember(habitId) {
@@ -50,6 +50,8 @@ fun HabitDetailRoute(
         ui = ui,
         onBack = onBack,
         onEdit = onEdit,
+        onPreviousMonth = vm::showPreviousMonth,
+        onNextMonth = vm::showNextMonth,
         onDeleteConfirm = {
             scope.launch {
                 vm.deleteHabit()

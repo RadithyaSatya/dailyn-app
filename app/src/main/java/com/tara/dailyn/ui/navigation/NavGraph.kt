@@ -9,9 +9,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.tara.dailyn.ui.features.addhabit.AddHabitRoute
 import com.tara.dailyn.ui.features.addhabit.model.FormMode
-import com.tara.dailyn.ui.features.diary.DiaryRoute
+import com.tara.dailyn.ui.features.analysis.AnalysisRoute
+import com.tara.dailyn.ui.features.habits.HabitsRoute
 import com.tara.dailyn.ui.features.habitdetail.HabitDetailRoute
 import com.tara.dailyn.ui.features.home.HomeRoute
+import com.tara.dailyn.ui.features.journey.JourneyRoute
+import com.tara.dailyn.ui.features.settings.SettingsRoute
+import com.tara.dailyn.ui.features.settings.categories.ManageCategoriesRoute
 
 @Composable
 fun NavGraph(
@@ -30,6 +34,9 @@ fun NavGraph(
                 },
                 onHabitClick = { habitId ->
                     navController.navigate(AppRoute.habitDetail(habitId))
+                },
+                onSettingsClick = {
+                    navController.navigate(AppRoute.Settings)
                 }
             )
         }
@@ -64,9 +71,35 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.Analysis.route) {
+            AnalysisRoute()
+        }
 
-        composable(Screen.Diary.route) {
-            DiaryRoute()
+        composable(Screen.Habits.route) {
+            HabitsRoute(
+                onHabitClick = { habitId ->
+                    navController.navigate(AppRoute.habitDetail(habitId))
+                }
+            )
+        }
+
+        composable(Screen.Journey.route) {
+            JourneyRoute()
+        }
+
+        composable(AppRoute.Settings) {
+            SettingsRoute(
+                onBack = { navController.popBackStack() },
+                onManageCategoriesClick = {
+                    navController.navigate(AppRoute.ManageCategories)
+                }
+            )
+        }
+
+        composable(AppRoute.ManageCategories) {
+            ManageCategoriesRoute(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         // DETAIL HABIT
@@ -91,22 +124,5 @@ fun NavGraph(
             )
         }
 
-        composable(
-            route = AppRoute.EditHabit,
-            arguments = listOf(
-                navArgument("habitId") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val habitId = backStackEntry.arguments!!.getString("habitId")!!
-            AddHabitRoute(
-                onSaved = { _ ->
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                onCancel = { navController.popBackStack() },
-                mode = FormMode.Edit(habitId)
-            )
-        }
     }
 }

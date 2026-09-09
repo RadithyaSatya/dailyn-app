@@ -6,6 +6,7 @@ import java.time.LocalTime
 sealed interface AddHabitEvent {
     data class TitleChanged(val value: String) : AddHabitEvent
     data class DescriptionChanged(val value: String) : AddHabitEvent
+    data class CategorySelected(val categoryId: Long) : AddHabitEvent
     data class FrequencyChanged(val type: FrequencyType) : AddHabitEvent
     data class ToggleDayOfWeek(val day: DayOfWeek) : AddHabitEvent
     data class SomeDaysCountChanged(val count: Int?) : AddHabitEvent

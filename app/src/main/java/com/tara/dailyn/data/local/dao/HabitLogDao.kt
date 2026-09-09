@@ -64,6 +64,30 @@ interface HabitLogDao {
     fun observeLogs(habitId: String, from: LocalDate, to: LocalDate): Flow<List<HabitLogEntity>>
 
     @Query("""
+        SELECT * FROM habit_logs
+        WHERE habitId = :habitId
+          AND date <= :to
+        ORDER BY date ASC, occurIndex ASC
+    """)
+    fun observeLogsUpTo(habitId: String, to: LocalDate): Flow<List<HabitLogEntity>>
+
+    @Query("""
+        SELECT l.* FROM habit_logs l
+        JOIN habits h ON h.id = l.habitId
+        WHERE COALESCE(h.habitGroupId, h.id) = :groupId
+          AND l.date <= :to
+        ORDER BY l.date ASC, l.occurIndex ASC
+    """)
+    fun observeLogsUpToForGroup(groupId: String, to: LocalDate): Flow<List<HabitLogEntity>>
+
+    @Query("""
+        SELECT * FROM habit_logs
+        WHERE date <= :to
+        ORDER BY date DESC, occurIndex DESC
+    """)
+    fun observeAllLogsUpTo(to: LocalDate): Flow<List<HabitLogEntity>>
+
+    @Query("""
         SELECT COUNT(*) FROM habit_logs
         WHERE habitId = :habitId AND status = :done AND date BETWEEN :from AND :to
     """)

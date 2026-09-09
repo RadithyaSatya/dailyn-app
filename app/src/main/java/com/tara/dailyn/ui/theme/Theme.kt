@@ -1,58 +1,83 @@
 package com.tara.dailyn.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = BrandOrange,
+    onPrimary = DarkText,
+    primaryContainer = BrandOrangeDeep,
+    onPrimaryContainer = DarkText,
+    secondary = BrandOrangeSecondary,
+    onSecondary = DarkText,
+    secondaryContainer = DarkCard,
+    onSecondaryContainer = DarkText,
+    tertiary = AchievementGold,
+    onTertiary = LightText,
+    tertiaryContainer = ColorTokens.DarkHeroSurface,
+    onTertiaryContainer = DarkText,
+    background = DarkBackground,
+    onBackground = DarkText,
+    surface = DarkBackground,
+    onSurface = DarkText,
+    surfaceVariant = DarkCard,
+    onSurfaceVariant = DarkSubtext,
+    surfaceContainer = DarkCard,
+    surfaceContainerHigh = DarkCard,
+    outline = DarkDivider,
+    error = ErrorRed,
+    onError = DarkText
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = BrandOrange,
+    onPrimary = LightCard,
+    primaryContainer = BrandOrangeSecondary,
+    onPrimaryContainer = LightText,
+    secondary = BrandOrangeSecondary,
+    onSecondary = LightText,
+    secondaryContainer = LightCard,
+    onSecondaryContainer = LightText,
+    tertiary = AchievementGold,
+    onTertiary = LightText,
+    tertiaryContainer = ColorTokens.LightHeroSurface,
+    onTertiaryContainer = LightText,
+    background = LightBackground,
+    onBackground = LightText,
+    surface = LightBackground,
+    onSurface = LightText,
+    surfaceVariant = LightCard,
+    onSurfaceVariant = LightSubtext,
+    surfaceContainer = LightCard,
+    surfaceContainerHigh = LightCard,
+    outline = LightDivider,
+    error = ErrorRed,
+    onError = LightCard
 )
 
 @Composable
 fun DailynTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
         content = content
     )
+}
+
+object ColorTokens {
+    val CompletedHabit = CompletedGreen
+    val CurrentStreak = BrandOrange
+    val Achievement = AchievementGold
+    val MissedHabit = ErrorRed
+    val LightHeroSurface = Color(0xFFFFEDD5)
+    val DarkHeroSurface = Color(0xFF292524)
 }

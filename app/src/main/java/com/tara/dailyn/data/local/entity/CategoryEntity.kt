@@ -9,5 +9,6 @@ import androidx.room.*
 data class CategoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
+    val icon: String,
     val color: String? = null
 )

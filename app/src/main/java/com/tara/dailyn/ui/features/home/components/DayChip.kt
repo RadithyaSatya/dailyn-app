@@ -28,7 +28,10 @@ fun DayChip(
     ElevatedCard(
         onClick = onClick,
         colors = if (selected)
-            CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         else
             CardDefaults.elevatedCardColors(),
         modifier = modifier

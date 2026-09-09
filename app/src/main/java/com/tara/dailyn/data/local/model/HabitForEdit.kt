@@ -8,6 +8,7 @@ data class HabitForEdit(
     val id: String,
     val title: String,
     val description: String?,
+    val selectedCategoryId: Long?,
     val uiFrequencyType: FrequencyType,
     val uiPeriodType: PeriodType,            // WEEK/MONTH (dipakai kalau SOME_DAYS_PER_PERIOD)
     val selectedDaysOfWeek: List<DayOfWeek>, // 1..7

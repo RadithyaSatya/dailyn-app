@@ -1,10 +1,13 @@
 <resources>
     <string name="app_name">Dailyn</string>
     <string name="tab_home_title">Home</string>
+    <string name="tab_habits_title">Habits</string>
     <string name="tab_analysis_title">Analysis</string>
     <string name="tab_add_habit">Add Habit</string>
-    <string name="tab_dairy_title">Dairy</string>
+    <string name="tab_journey_title">Journey</string>
     <string name="home_title">Dailyn - Habits</string>
+    <string name="habits_title">All Habits</string>
+    <string name="journey_title">Journey</string>
     <string name="empty_list_message">No habits yet.\nTap + to add one.</string>
     <string name="fab_add_content_desc">Add</string>
     <string name="new_habit_title">New Habit #%1$d</string>
@@ -32,4 +35,17 @@
     <string name="period_month">per Month</string>
     <string name="some_days_per_period_example">Example: %1$d day(s) %2$s</string>
     <string name="validation_error_message">Please check your input fields</string>
+    <string name="settings_title">Settings</string>
+    <string name="edit_previous_days_title">Edit previous days</string>
+    <string name="edit_previous_days_description">Allow habit checklists from days before today to be changed.</string>
+    <string name="manage_categories_title">Manage Categories</string>
+    <string name="manage_categories_description">Edit or delete your custom and default categories.</string>
+    <string name="manage_categories_empty">No categories available to manage.</string>
+    <string name="edit_category_title">Edit category</string>
+    <string name="delete_category_title">Delete category?</string>
+    <string name="delete_category_message">Delete "%1$s"? Habits using it will move to None.</string>
+    <string name="category_icon_label">Category icon</string>
+    <string name="category_name_label">Category name</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
 </resources>

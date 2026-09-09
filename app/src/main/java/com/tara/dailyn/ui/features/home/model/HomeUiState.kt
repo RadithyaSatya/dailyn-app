@@ -5,6 +5,7 @@ import java.time.LocalDate
 data class HomeUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val items: List<HabitUi> = emptyList(),
+    val allowPreviousDayEdits: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
 )

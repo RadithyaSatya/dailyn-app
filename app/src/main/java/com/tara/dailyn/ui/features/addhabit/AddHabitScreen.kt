@@ -22,6 +22,7 @@ import com.tara.dailyn.ui.features.addhabit.components.DaysOfWeekSelector
 import com.tara.dailyn.ui.features.addhabit.components.FrequencySelector
 import com.tara.dailyn.ui.features.addhabit.components.SomeDaysPerPeriodFields
 import com.tara.dailyn.ui.features.addhabit.components.SpecificDayOfMonthField
+import com.tara.dailyn.ui.features.addhabit.components.CategorySelector
 import com.tara.dailyn.ui.features.addhabit.model.AddHabitEvent
 import com.tara.dailyn.ui.features.addhabit.model.AddHabitUiState
 import com.tara.dailyn.ui.features.addhabit.model.FrequencyType
@@ -104,6 +105,21 @@ fun AddHabitScreen(
                 )
             }
             item { Spacer(Modifier.height(8.dp)) }
+            item {
+                OutlinedCard(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CategorySelector(
+                        categories = state.categories,
+                        selectedCategoryId = state.selectedCategoryId,
+                        categoryError = state.categoryError,
+                        onCategorySelected = { onEvent(AddHabitEvent.CategorySelected(it)) },
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
             item {
                 OutlinedCard(
                     shape = RoundedCornerShape(16.dp),

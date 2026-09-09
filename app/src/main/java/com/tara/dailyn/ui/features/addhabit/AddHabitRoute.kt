@@ -22,7 +22,7 @@ fun AddHabitRoute(
 ) {
     val context = LocalContext.current.applicationContext
     val db = remember { AppDatabase.get(context) }
-    val repo = remember { HabitRepository(db.habitDao(), db.habitLogDao()) }
+    val repo = remember { HabitRepository(db.categoryDao(), db.habitDao(), db.habitLogDao(), context) }
 
     val vm: AddHabitViewModel = viewModel(
         factory = remember(repo, mode) { AddHabitViewModelFactory(repo, mode) }

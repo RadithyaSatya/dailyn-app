@@ -12,6 +12,7 @@ import java.time.*
 )
 data class HabitEntity(
     @PrimaryKey val id: String,
+    val habitGroupId: String? = null,
     val title: String,
     val description: String? = null,
 
@@ -27,6 +28,7 @@ data class HabitEntity(
     val defaultTimeOfDay: LocalTime? = null,
     val color: String? = null,
     val icon: String? = null,
+    val homeSortOrder: Long? = null,
     val isArchived: Boolean = false,
 
     val createdAt: Instant,

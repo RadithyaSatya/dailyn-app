@@ -21,6 +21,6 @@ object DependencyProvider {
 
     fun provideHabitRepository(context: Context): HabitRepository {
         val db = provideDatabase(context)
-        return HabitRepository(db.habitDao(), db.habitLogDao())
+        return HabitRepository(db.categoryDao(), db.habitDao(), db.habitLogDao(), context.applicationContext)
     }
 }

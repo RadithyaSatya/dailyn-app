@@ -8,6 +8,8 @@ enum class PeriodType { WEEK, MONTH }
 data class AddHabitUiState (
     val title: String = "",
     val description: String = "",
+    val categories: List<HabitCategoryOption> = emptyList(),
+    val selectedCategoryId: Long? = null,
     val frequencyType: FrequencyType = FrequencyType.EVERY_DAY,
     val selectedDaysOfWeek: Set<DayOfWeek> = emptySet(),
     val specificDayOfMonth: Int? = null,
@@ -17,5 +19,6 @@ data class AddHabitUiState (
     val reminderEnabled: Boolean = true,
     val reminderTime: LocalTime? = null,
     val isSaving: Boolean = false,
-    val titleError: String? = null
+    val titleError: String? = null,
+    val categoryError: String? = null
 )

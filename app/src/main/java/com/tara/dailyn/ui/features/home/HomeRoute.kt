@@ -8,18 +8,21 @@ import com.tara.dailyn.data.local.db.AppDatabase
 import com.tara.dailyn.data.repository.HabitRepository
 import com.tara.dailyn.ui.features.home.model.HomeEvent
 import androidx.compose.ui.platform.LocalContext
+import com.tara.dailyn.data.preferences.AppSettings
 
 @Composable
 fun HomeRoute(
     onAddHabitClick: () -> Unit = {},
-    onHabitClick: (String) -> Unit = {}   // <--- tambahin ini
+    onHabitClick: (String) -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
     val context = LocalContext.current.applicationContext
     val db = remember { AppDatabase.get(context) }
-    val repo = remember { HabitRepository(db.habitDao(), db.habitLogDao()) }
+    val repo = remember { HabitRepository(db.categoryDao(), db.habitDao(), db.habitLogDao(), context) }
+    val appSettings = remember { AppSettings(context) }
 
     val vm: HomeViewModel = viewModel(
-        factory = remember(repo) { HomeViewModelFactory(repo) }
+        factory = remember(repo, appSettings) { HomeViewModelFactory(repo, appSettings) }
     )
 
     val state = vm.state.collectAsStateWithLifecycle().value
@@ -34,6 +37,7 @@ fun HomeRoute(
         },
         onHabitClick = { habitId ->
             onHabitClick(habitId)
-        }
+        },
+        onSettingsClick = onSettingsClick
     )
 }

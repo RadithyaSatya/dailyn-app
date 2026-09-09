@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tara.dailyn.R
@@ -24,6 +28,27 @@ fun SomeDaysPerPeriodFields(
     period: PeriodType,
     onPeriodChange: (PeriodType) -> Unit
 ) {
+    val maxCount = when (period) {
+        PeriodType.WEEK -> 7
+        PeriodType.MONTH -> 31
+    }
+    val focusManager = LocalFocusManager.current
+    var countInput by remember { mutableStateOf((count ?: 1).toString()) }
+
+    LaunchedEffect(count) {
+        val normalized = (count ?: 1).toString()
+        if (countInput != normalized) {
+            countInput = normalized
+        }
+    }
+
+    fun commitCountInput() {
+        val parsed = countInput.toIntOrNull()
+        val normalized = parsed?.coerceIn(1, maxCount) ?: 1
+        countInput = normalized.toString()
+        onCountChange(normalized)
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = stringResource(R.string.some_days_per_period_title),
@@ -35,12 +60,31 @@ fun SomeDaysPerPeriodFields(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
-                value = (count ?: 1).toString(),
-                onValueChange = { onCountChange(it.toIntOrNull()?.coerceAtLeast(1)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                value = countInput,
+                onValueChange = {
+                    if (it.all(Char::isDigit)) {
+                        countInput = it
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        commitCountInput()
+                        focusManager.clearFocus()
+                    }
+                ),
                 label = { Text(stringResource(R.string.some_days_per_period_days_label)) },
                 singleLine = true,
-                modifier = Modifier.width(120.dp)
+                modifier = Modifier
+                    .width(120.dp)
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            commitCountInput()
+                        }
+                    }
             )
 
             var expanded by remember { mutableStateOf(false) }

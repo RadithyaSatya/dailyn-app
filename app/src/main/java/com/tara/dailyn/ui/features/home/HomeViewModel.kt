@@ -2,6 +2,7 @@ package com.tara.dailyn.ui.features.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tara.dailyn.data.preferences.AppSettings
 import com.tara.dailyn.ui.features.home.model.HabitUi
 import com.tara.dailyn.ui.features.home.model.HomeEvent
 import com.tara.dailyn.ui.features.home.model.HomeUiState
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 class HomeViewModel(
-    private val repo: HabitRepository
+    private val repo: HabitRepository,
+    private val appSettings: AppSettings
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -23,6 +25,12 @@ class HomeViewModel(
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            appSettings.allowPreviousDayEdits.collect { allowed ->
+                _state.update { it.copy(allowPreviousDayEdits = allowed) }
+            }
+        }
+
         viewModelScope.launch {
             state
                 .map { it.selectedDate }
@@ -44,11 +52,22 @@ class HomeViewModel(
             HomeEvent.AddHabit -> {
             }
             is HomeEvent.ToggleHabit -> toggleHabit(event.id)
+            is HomeEvent.ReorderPendingHabits -> reorderPendingHabits(event.orderedIds)
         }
     }
 
     private fun toggleHabit(id: String) = viewModelScope.launch {
         val date = _state.value.selectedDate
-        repo.toggle(habitId = id, date = date, occurIndex = 0)
+        repo.toggle(
+            habitId = id,
+            date = date,
+            occurIndex = 0,
+            allowPreviousDayEdits = _state.value.allowPreviousDayEdits
+        )
+    }
+
+    private fun reorderPendingHabits(orderedIds: List<String>) = viewModelScope.launch {
+        if (orderedIds.isEmpty()) return@launch
+        repo.reorderHomeHabits(orderedIds)
     }
 }
